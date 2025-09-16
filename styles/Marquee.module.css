@@ -1,10 +1,18 @@
 .anim {
     position: absolute;
     will-change: transform;
-    animation: marquee 15s linear infinite ;
+    animation: marquee-rtl 15s linear infinite;
 }
 
 .anim:hover {
     animation-play-state: paused;
-    
+}
+
+@keyframes marquee-rtl {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
 }
