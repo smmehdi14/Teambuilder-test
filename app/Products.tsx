@@ -45,6 +45,42 @@ const Products = ({ products, gap }: ProductsProps) => {
     }
   };
 
+
+
+  // State for exchange rate
+  const [usdJpyRate, setUsdJpyRate] = useState<number>(150);
+
+  // Fetch USD to JPY rate from exchangerate.host and cache for 1 hour
+  useEffect(() => {
+    const fetchRate = async () => {
+      const cached = localStorage.getItem('usdJpyRate');
+      const cachedTime = localStorage.getItem('usdJpyRateTime');
+      const now = Date.now();
+      if (cached && cachedTime && now - parseInt(cachedTime) < 60 * 60 * 1000) {
+        setUsdJpyRate(Number(cached));
+        return;
+      }
+      try {
+        const res = await fetch('https://api.exchangerate.host/latest?base=USD&symbols=JPY');
+        const data = await res.json();
+        if (data && data.rates && data.rates.JPY) {
+          setUsdJpyRate(data.rates.JPY);
+          localStorage.setItem('usdJpyRate', data.rates.JPY.toString());
+          localStorage.setItem('usdJpyRateTime', now.toString());
+        }
+      } catch (e) {
+        // fallback to default
+        setUsdJpyRate(150);
+      }
+    };
+    fetchRate();
+  }, []);
+
+  // Convert USD to JPY using fetched rate
+  const usdToJpy = (usd: number) => {
+    return Math.round(usd * usdJpyRate);
+  };
+
   // Format price as Japanese Yen
   const formatYen = (price: number) => {
     return price.toLocaleString('ja-JP', { style: 'currency', currency: 'JPY' });
@@ -68,9 +104,9 @@ const Products = ({ products, gap }: ProductsProps) => {
           <p>{products.name}</p>
           <div className="flex gap-3">
             <span className="text-sm text-lightGray line-through">
-              {products.oldPrice ? formatYen(products.oldPrice) : ''}
+              {products.oldPrice ? formatYen(usdToJpy(products.oldPrice)) : ''}
             </span>
-            <b className="text-zinc-900">{formatYen(products.price)}</b>
+            <b className="text-zinc-900">{formatYen(usdToJpy(products.price))}</b>
           </div>
         </nav>
 
